@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองห้องพักสำหรับบัณฑิตที่เข้าร่วมพิธีพระราชทานปริญญาบัตร</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'turquoise': '#06b6d4',
+                        'turquoise-dark': '#0891b2',
+                        'mint': '#10b981',
+                        'mint-light': '#d1fae5'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Kanit', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-mint-light to-white min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🏨 ระบบจองห้องพัก</h1>
+            <p class="text-lg text-gray-600">สำหรับบัณฑิตที่เข้าร่วมพิธีพระราชทานปริญญาบัตร ครั้งที่ 39</p>
+            <p class="text-md text-gray-500">ประจำปีการศึกษา 2567</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="flex justify-center mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-2 flex space-x-2">
+                <button onclick="showPage('booking')" id="bookingTab" class="px-6 py-3 rounded-lg font-medium transition-all duration-200 bg-turquoise text-white">
+                    🏨 จองห้องพัก
+                </button>
+                <button onclick="showPage('myBookings')" id="myBookingsTab" class="px-6 py-3 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    📋 รายการจองของฉัน
+                </button>
+                <button onclick="showPage('admin')" id="adminTab" class="px-6 py-3 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    👨‍💼 จัดการจองห้อง (Admin)
+                </button>
+                <button onclick="showPage('statistics')" id="statisticsTab" class="px-6 py-3 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    📊 สถิติการใช้งาน
+                </button>
+            </div>
+        </nav>
+
+        <!-- Booking Page -->
+        <div id="bookingPage" class="page">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Date Selection and Guest Count -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">📅 เลือกวันที่และจำนวนผู้เข้าพัก</h2>
+                    
+                    <!-- Date Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เข้าพัก:</label>
+                        <input type="date" id="checkInDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent mb-3">
+                        
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ออก:</label>
+                        <input type="date" id="checkOutDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                    </div>
+
+                    <!-- Guest Count -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนผู้เข้าพัก:</label>
+                        <select id="guestCount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                            <option value="">เลือกจำนวนคน</option>
+                            <option value="1">1 คน</option>
+                            <option value="2">2 คน</option>
+                            <option value="3">3 คน</option>
+                            <option value="4">4 คน</option>
+                        </select>
+                    </div>
+
+                    <button onclick="checkAvailability()" class="w-full bg-turquoise hover:bg-turquoise-dark text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                        🔍 ตรวจสอบห้องว่าง
+                    </button>
+                </div>
+
+                <!-- Room List -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">🏠 รายการห้องพัก</h2>
+                    <div id="roomList" class="space-y-3">
+                        <!-- Rooms will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Bookings Page -->
+        <div id="myBookingsPage" class="page hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">📋 รายการจองของฉัน</h2>
+                
+                <div id="myBookingsList" class="space-y-4">
+                    <!-- Bookings will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div id="adminPage" class="page hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6">👨‍💼 จัดการจองห้อง (Admin)</h2>
+                
+                <!-- Filter Controls -->
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามสถานะ:</label>
+                        <select id="adminStatusFilter" onchange="filterAdminBookings()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                            <option value="">ทุกสถานะ</option>
+                            <option value="รอการยืนยัน">รอการยืนยัน</option>
+                            <option value="ยืนยันการจองแล้ว">ยืนยันการจองแล้ว</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามห้อง:</label>
+                        <select id="adminRoomFilter" onchange="filterAdminBookings()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                            <option value="">ทุกห้อง</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">กรองตามวันที่:</label>
+                        <input type="date" id="adminDateFilter" onchange="filterAdminBookings()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                    </div>
+                </div>
+
+                <div id="adminBookingsList" class="space-y-4">
+                    <!-- Admin bookings will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Page -->
+        <div id="statisticsPage" class="page hidden">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">📊 สถิติการใช้งาน</h2>
+                    <div id="statisticsContent" class="space-y-4">
+                        <!-- Statistics will be populated here -->
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">📈 ห้องที่ได้รับความนิยม</h2>
+                    <div id="popularRooms" class="space-y-3">
+                        <!-- Popular rooms will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-6">📝 กรอกข้อมูลการจอง</h3>
+            <form id="bookingForm" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ห้องพัก:</label>
+                        <input type="text" id="modalRoomName" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ราคารวม:</label>
+                        <input type="text" id="modalTotalPrice" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เข้าพัก:</label>
+                        <input type="text" id="modalCheckIn" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ออก:</label>
+                        <input type="text" id="modalCheckOut" readonly class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อผู้จอง:</label>
+                    <input type="text" id="bookerName" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">เขตพื้นที่/วิทยาเขต:</label>
+                        <select id="campus" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                            <option value="">เลือกเขตพื้นที่</option>
+                            <option value="เขตพื้นที่บางพระ">เขตพื้นที่บางพระ</option>
+                            <option value="เขตพื้นที่จักรพงษภูวนารถ">เขตพื้นที่จักรพงษภูวนารถ</option>
+                            <option value="เขตพื้นที่อุเทน">เขตพื้นที่อุเทน</option>
+                            <option value="วิทยาเขตจันทบุรี">วิทยาเขตจันทบุรี</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">คณะ:</label>
+                        <select id="faculty" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                            <option value="">เลือกคณะ</option>
+                            <option value="คณะเกษตรศาสตร์และทรัพยากรธรรมชาติ">คณะเกษตรศาสตร์และทรัพยากรธรรมชาติ</option>
+                            <option value="คณะมนุษยศาสตร์และสังคมศาสตร์">คณะมนุษยศาสตร์และสังคมศาสตร์</option>
+                            <option value="คณะวิทยาศาสตร์และเทคโนโลยี">คณะวิทยาศาสตร์และเทคโนโลยี</option>
+                            <option value="คณะสัตวแพทยศาสตร์">คณะสัตวแพทยศาสตร์</option>
+                            <option value="สถาบันเทคโนโลยีการบินและอวกาศ">สถาบันเทคโนโลยีการบินและอวกาศ</option>
+                            <option value="สำนักวิชาวิศวกรรมศาสตร์และนวัตกรรม">สำนักวิชาวิศวกรรมศาสตร์และนวัตกรรม</option>
+                            <option value="สถาบันนวัตกรรมการศึกษาและการเรียนรู้ตลอดชีวิต">สถาบันนวัตกรรมการศึกษาและการเรียนรู้ตลอดชีวิต</option>
+                            <option value="คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ">คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ</option>
+                            <option value="คณะวิศวกรรมศาสตร์และสถาปัตยกรรมศาสตร์">คณะวิศวกรรมศาสตร์และสถาปัตยกรรมศาสตร์</option>
+                            <option value="คณะเทคโนโลยีอุตสาหกรรมการเกษตร">คณะเทคโนโลยีอุตสาหกรรมการเกษตร</option>
+                            <option value="คณะเทคโนโลยีสังคม">คณะเทคโนโลยีสังคม</option>
+                            <option value="คณะศิลปศาสตร์">คณะศิลปศาสตร์</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์:</label>
+                    <input type="tel" id="bookerPhone" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-2">💳 ข้อมูลการชำระเงิน</h4>
+                    <p class="text-sm text-gray-600 mb-2">
+                        <strong>ธนาคารกรุงไทย</strong><br>
+                        เลขที่บัญชี: <span class="font-mono bg-yellow-100 px-2 py-1 rounded">123-456-789</span><br>
+                        ชื่อบัญชี: มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">แนบสลิปหลักฐานการชำระเงิน:</label>
+                    <input type="file" id="paymentSlip" accept="image/*" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์รูปภาพเท่านั้น (JPG, PNG)</p>
+                </div>
+
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-mint hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                        ✅ ยืนยันการจอง
+                    </button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                        ❌ ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-6">📄 รายละเอียดการจอง</h3>
+            <div id="bookingDetails" class="space-y-4">
+                <!-- Details will be populated here -->
+            </div>
+            <div class="flex justify-end pt-4">
+                <button onclick="closeDetailsModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                    ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Slip Modal -->
+    <div id="paymentSlipModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-6">💳 สลิปการชำระเงิน</h3>
+            <div class="text-center">
+                <img id="paymentSlipImage" src="" alt="Payment Slip" class="max-w-full h-auto rounded-lg shadow-md">
+            </div>
+            <div class="flex justify-end pt-4">
+                <button onclick="closePaymentSlipModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+                    ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage
+        let bookings = JSON.parse(localStorage.getItem('accommodationBookings')) || [];
+        
+        const rooms = [
+            { name: 'ห้องไพลิน', capacity: 2, price: 1500, color: 'bg-purple-100 border-purple-300' },
+            { name: 'ห้องวิบูลย์', capacity: 2, price: 1500, color: 'bg-blue-100 border-blue-300' },
+            { name: 'ห้องกรรณิการ์', capacity: 2, price: 1500, color: 'bg-pink-100 border-pink-300' },
+            { name: 'ห้องวิไลวรรณ', capacity: 4, price: 2000, color: 'bg-yellow-100 border-yellow-300' },
+            { name: 'ห้องอินทนิล', capacity: 4, price: 2000, color: 'bg-indigo-100 border-indigo-300' },
+            { name: 'ห้องศรีวิลัย', capacity: 4, price: 2000, color: 'bg-green-100 border-green-300' }
+        ];
+
+        let selectedRoom = null;
+        let selectedDates = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setDefaultDates();
+        });
+
+        function initializePage() {
+            showPage('booking');
+            displayRooms();
+            updateMyBookings();
+            updateStatistics();
+            populateAdminRoomFilter();
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const todayString = today.toISOString().split('T')[0];
+            const tomorrowString = tomorrow.toISOString().split('T')[0];
+            
+            document.getElementById('checkInDate').value = todayString;
+            document.getElementById('checkOutDate').value = tomorrowString;
+            document.getElementById('checkInDate').min = todayString;
+            document.getElementById('checkOutDate').min = todayString;
+
+            // Add event listeners for date validation
+            document.getElementById('checkInDate').addEventListener('change', validateDates);
+            document.getElementById('checkOutDate').addEventListener('change', validateDates);
+        }
+
+        function validateDates() {
+            const checkIn = new Date(document.getElementById('checkInDate').value);
+            const checkOut = new Date(document.getElementById('checkOutDate').value);
+            
+            if (checkOut <= checkIn) {
+                alert('วันที่ออกต้องมากกว่าวันที่เข้าพัก');
+                document.getElementById('checkOutDate').value = '';
+                return false;
+            }
+            return true;
+        }
+
+        function displayRooms() {
+            const roomList = document.getElementById('roomList');
+            roomList.innerHTML = rooms.map(room => `
+                <div class="border-2 ${room.color} rounded-lg p-4 transition-all duration-200 hover:shadow-md">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-800">${room.name}</h3>
+                            <p class="text-sm text-gray-600">👥 จุได้ ${room.capacity} คน</p>
+                            <p class="text-sm text-gray-600">💰 ${room.price.toLocaleString()} บาท/คืน</p>
+                        </div>
+                        <div id="status-${room.name}" class="text-sm font-medium">
+                            <span class="text-gray-500">เลือกวันที่เพื่อดูสถานะ</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateAdminRoomFilter() {
+            const adminRoomFilter = document.getElementById('adminRoomFilter');
+            adminRoomFilter.innerHTML = '<option value="">ทุกห้อง</option>';
+            rooms.forEach(room => {
+                adminRoomFilter.innerHTML += `<option value="${room.name}">${room.name}</option>`;
+            });
+        }
+
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            
+            // Show selected page
+            document.getElementById(pageName + 'Page').classList.remove('hidden');
+            
+            // Update tab styles
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('bg-turquoise', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            document.getElementById(pageName + 'Tab').classList.add('bg-turquoise', 'text-white');
+            document.getElementById(pageName + 'Tab').classList.remove('text-gray-600', 'hover:bg-gray-100');
+
+            if (pageName === 'myBookings') {
+                updateMyBookings();
+            } else if (pageName === 'admin') {
+                updateAdminBookings();
+            } else if (pageName === 'statistics') {
+                updateStatistics();
+            }
+        }
+
+        function checkAvailability() {
+            const checkInDate = document.getElementById('checkInDate').value;
+            const checkOutDate = document.getElementById('checkOutDate').value;
+            const guestCount = parseInt(document.getElementById('guestCount').value);
+
+            if (!checkInDate || !checkOutDate || !guestCount) {
+                alert('กรุณาเลือกวันที่และจำนวนผู้เข้าพักให้ครบถ้วน');
+                return;
+            }
+
+            if (!validateDates()) {
+                return;
+            }
+
+            selectedDates = { checkIn: checkInDate, checkOut: checkOutDate, guests: guestCount };
+
+            rooms.forEach(room => {
+                const isAvailable = checkRoomAvailable(room.name, checkInDate, checkOutDate) && room.capacity >= guestCount;
+                const statusElement = document.getElementById(`status-${room.name}`);
+                const roomElement = statusElement.closest('.border-2');
+                
+                if (!isAvailable) {
+                    if (room.capacity < guestCount) {
+                        statusElement.innerHTML = '<span class="text-orange-600 font-semibold">⚠️ ไม่เพียงพอ</span>';
+                    } else {
+                        statusElement.innerHTML = '<span class="text-red-600 font-semibold">❌ จองแล้ว</span>';
+                    }
+                    roomElement.classList.remove('hover:shadow-md', 'cursor-pointer');
+                    roomElement.onclick = null;
+                } else {
+                    statusElement.innerHTML = '<span class="text-green-600 font-semibold">✅ ว่าง</span>';
+                    roomElement.classList.add('hover:shadow-md', 'cursor-pointer');
+                    roomElement.onclick = () => openBookingModal(room);
+                }
+            });
+        }
+
+        function checkRoomAvailable(roomName, checkInDate, checkOutDate) {
+            const checkIn = new Date(checkInDate);
+            const checkOut = new Date(checkOutDate);
+            
+            return !bookings.some(booking => {
+                if (booking.room !== roomName) return false;
+                
+                const bookingCheckIn = new Date(booking.checkInDate);
+                const bookingCheckOut = new Date(booking.checkOutDate);
+                
+                return (checkIn < bookingCheckOut && checkOut > bookingCheckIn);
+            });
+        }
+
+        function calculateNights(checkIn, checkOut) {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        }
+
+        function openBookingModal(room) {
+            selectedRoom = room;
+            const nights = calculateNights(selectedDates.checkIn, selectedDates.checkOut);
+            const totalPrice = room.price * nights;
+
+            document.getElementById('modalRoomName').value = room.name;
+            document.getElementById('modalTotalPrice').value = `${totalPrice.toLocaleString()} บาท (${nights} คืน)`;
+            document.getElementById('modalCheckIn').value = new Date(selectedDates.checkIn).toLocaleDateString('th-TH');
+            document.getElementById('modalCheckOut').value = new Date(selectedDates.checkOut).toLocaleDateString('th-TH');
+            
+            document.getElementById('bookingModal').classList.remove('hidden');
+            document.getElementById('bookingModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('flex');
+            document.getElementById('bookingForm').reset();
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            document.getElementById('detailsModal').classList.remove('flex');
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const paymentSlip = document.getElementById('paymentSlip').files[0];
+            if (!paymentSlip) {
+                alert('กรุณาแนบสลิปการชำระเงิน');
+                return;
+            }
+
+            const nights = calculateNights(selectedDates.checkIn, selectedDates.checkOut);
+            const totalPrice = selectedRoom.price * nights;
+
+            // Convert file to base64 for storage
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const booking = {
+                    id: Date.now(),
+                    room: selectedRoom.name,
+                    checkInDate: selectedDates.checkIn,
+                    checkOutDate: selectedDates.checkOut,
+                    nights: nights,
+                    guests: selectedDates.guests,
+                    totalPrice: totalPrice,
+                    bookerName: document.getElementById('bookerName').value,
+                    campus: document.getElementById('campus').value,
+                    faculty: document.getElementById('faculty').value,
+                    bookerPhone: document.getElementById('bookerPhone').value,
+                    paymentSlip: paymentSlip.name,
+                    paymentSlipData: e.target.result, // Store base64 data
+                    bookingDate: new Date().toISOString(),
+                    status: 'รอการยืนยัน'
+                };
+
+                bookings.push(booking);
+                localStorage.setItem('accommodationBookings', JSON.stringify(bookings));
+                
+                alert('✅ จองห้องพักเรียบร้อยแล้ว! รอการยืนยันจากเจ้าหน้าที่');
+                closeModal();
+                checkAvailability(); // Refresh room status
+            };
+            reader.readAsDataURL(paymentSlip);
+        });
+
+        function updateMyBookings() {
+            const myBookingsList = document.getElementById('myBookingsList');
+            
+            if (bookings.length === 0) {
+                myBookingsList.innerHTML = '<div class="text-center text-gray-500 py-8">ไม่มีรายการจอง</div>';
+                return;
+            }
+
+            myBookingsList.innerHTML = bookings.map(booking => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg text-gray-800">${booking.room}</h3>
+                            <p class="text-gray-600">👤 ${booking.bookerName}</p>
+                            <p class="text-gray-600">🏫 ${booking.faculty}</p>
+                            <p class="text-gray-600">📞 ${booking.bookerPhone}</p>
+                            <p class="text-gray-600">📅 ${new Date(booking.checkInDate).toLocaleDateString('th-TH')} - ${new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</p>
+                            <p class="text-gray-600">👥 ${booking.guests} คน | 🌙 ${booking.nights} คืน</p>
+                            <p class="text-gray-600">💰 ${booking.totalPrice.toLocaleString()} บาท</p>
+                            <p class="text-sm ${booking.status === 'รอการยืนยัน' ? 'text-orange-600' : 'text-green-600'} font-semibold">
+                                สถานะ: ${booking.status}
+                            </p>
+                        </div>
+                        <button onclick="showBookingDetails(${booking.id})" class="bg-turquoise hover:bg-turquoise-dark text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            📄 ดูรายละเอียด
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showBookingDetails(bookingId) {
+            const booking = bookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            const detailsContent = document.getElementById('bookingDetails');
+            detailsContent.innerHTML = `
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <h4 class="font-semibold text-lg text-gray-800">ข้อมูลการจอง</h4>
+                        <p><strong>รหัสการจอง:</strong> ${booking.id}</p>
+                        <p><strong>ห้องพัก:</strong> ${booking.room}</p>
+                        <p><strong>วันที่เข้าพัก:</strong> ${new Date(booking.checkInDate).toLocaleDateString('th-TH')}</p>
+                        <p><strong>วันที่ออก:</strong> ${new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</p>
+                        <p><strong>จำนวนคืน:</strong> ${booking.nights} คืน</p>
+                        <p><strong>จำนวนผู้เข้าพัก:</strong> ${booking.guests} คน</p>
+                        <p><strong>ราคารวม:</strong> ${booking.totalPrice.toLocaleString()} บาท</p>
+                        <p><strong>สถานะ:</strong> <span class="${booking.status === 'รอการยืนยัน' ? 'text-orange-600' : 'text-green-600'} font-semibold">${booking.status}</span></p>
+                    </div>
+                    <div class="space-y-3">
+                        <h4 class="font-semibold text-lg text-gray-800">ข้อมูลผู้จอง</h4>
+                        <p><strong>ชื่อ:</strong> ${booking.bookerName}</p>
+                        <p><strong>เขตพื้นที่/วิทยาเขต:</strong> ${booking.campus}</p>
+                        <p><strong>คณะ:</strong> ${booking.faculty}</p>
+                        <p><strong>เบอร์โทรศัพท์:</strong> ${booking.bookerPhone}</p>
+                        <p><strong>วันที่จอง:</strong> ${new Date(booking.bookingDate).toLocaleDateString('th-TH')}</p>
+                        <p><strong>สลิปการชำระเงิน:</strong> 
+                            <button onclick="showPaymentSlip('${booking.paymentSlipData}')" class="text-turquoise hover:text-turquoise-dark underline ml-2">
+                                📄 ดูสลิป
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailsModal').classList.remove('hidden');
+            document.getElementById('detailsModal').classList.add('flex');
+        }
+
+        function updateAdminBookings() {
+            filterAdminBookings();
+        }
+
+        function filterAdminBookings() {
+            const adminBookingsList = document.getElementById('adminBookingsList');
+            const statusFilter = document.getElementById('adminStatusFilter').value;
+            const roomFilter = document.getElementById('adminRoomFilter').value;
+            const dateFilter = document.getElementById('adminDateFilter').value;
+            
+            let filteredBookings = bookings;
+            
+            if (statusFilter) {
+                filteredBookings = filteredBookings.filter(booking => booking.status === statusFilter);
+            }
+            
+            if (roomFilter) {
+                filteredBookings = filteredBookings.filter(booking => booking.room === roomFilter);
+            }
+            
+            if (dateFilter) {
+                filteredBookings = filteredBookings.filter(booking => booking.checkInDate === dateFilter);
+            }
+
+            if (filteredBookings.length === 0) {
+                adminBookingsList.innerHTML = '<div class="text-center text-gray-500 py-8">ไม่มีรายการจอง</div>';
+                return;
+            }
+
+            adminBookingsList.innerHTML = filteredBookings.map(booking => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg text-gray-800">${booking.room}</h3>
+                            <p class="text-gray-600">👤 ${booking.bookerName}</p>
+                            <p class="text-gray-600">🏫 ${booking.faculty}</p>
+                            <p class="text-gray-600">📞 ${booking.bookerPhone}</p>
+                            <p class="text-gray-600">📅 ${new Date(booking.checkInDate).toLocaleDateString('th-TH')} - ${new Date(booking.checkOutDate).toLocaleDateString('th-TH')}</p>
+                            <p class="text-gray-600">👥 ${booking.guests} คน | 🌙 ${booking.nights} คืน</p>
+                            <p class="text-gray-600">💰 ${booking.totalPrice.toLocaleString()} บาท</p>
+                            <p class="text-sm ${booking.status === 'รอการยืนยัน' ? 'text-orange-600' : 'text-green-600'} font-semibold">
+                                สถานะ: ${booking.status}
+                            </p>
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <button onclick="showBookingDetails(${booking.id})" class="bg-turquoise hover:bg-turquoise-dark text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                                📄 ดูรายละเอียด
+                            </button>
+                            <button onclick="showPaymentSlip('${booking.paymentSlipData}')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                                💳 ดูสลิป
+                            </button>
+                            ${booking.status === 'รอการยืนยัน' ? 
+                                `<button onclick="confirmBooking(${booking.id})" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                                    ✅ ยืนยันการจอง
+                                </button>` : 
+                                `<span class="text-green-600 text-sm font-semibold text-center">✅ ยืนยันแล้ว</span>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function confirmBooking(bookingId) {
+            if (confirm('คุณต้องการยืนยันการจองนี้หรือไม่?')) {
+                const bookingIndex = bookings.findIndex(b => b.id === bookingId);
+                if (bookingIndex !== -1) {
+                    bookings[bookingIndex].status = 'ยืนยันการจองแล้ว';
+                    localStorage.setItem('accommodationBookings', JSON.stringify(bookings));
+                    updateAdminBookings();
+                    alert('✅ ยืนยันการจองเรียบร้อยแล้ว');
+                }
+            }
+        }
+
+        function showPaymentSlip(paymentSlipData) {
+            if (!paymentSlipData) {
+                alert('ไม่พบข้อมูลสลิปการชำระเงิน');
+                return;
+            }
+            
+            document.getElementById('paymentSlipImage').src = paymentSlipData;
+            document.getElementById('paymentSlipModal').classList.remove('hidden');
+            document.getElementById('paymentSlipModal').classList.add('flex');
+        }
+
+        function closePaymentSlipModal() {
+            document.getElementById('paymentSlipModal').classList.add('hidden');
+            document.getElementById('paymentSlipModal').classList.remove('flex');
+        }
+
+        function updateStatistics() {
+            const statisticsContent = document.getElementById('statisticsContent');
+            const popularRooms = document.getElementById('popularRooms');
+            
+            // Calculate statistics
+            const totalBookings = bookings.length;
+            const totalRevenue = bookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
+            const roomUsage = {};
+            const campusUsage = {};
+            
+            bookings.forEach(booking => {
+                // Room usage
+                roomUsage[booking.room] = (roomUsage[booking.room] || 0) + 1;
+                
+                // Campus usage
+                campusUsage[booking.campus] = (campusUsage[booking.campus] || 0) + 1;
+            });
+
+            // Most popular campus
+            const mostPopularCampus = Object.keys(campusUsage).reduce((a, b) => 
+                campusUsage[a] > campusUsage[b] ? a : b, Object.keys(campusUsage)[0] || 'ไม่มีข้อมูล'
+            );
+
+            statisticsContent.innerHTML = `
+                <div class="bg-turquoise text-white p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg">📊 จำนวนการจองทั้งหมด</h3>
+                    <p class="text-2xl font-bold">${totalBookings} ครั้ง</p>
+                </div>
+                <div class="bg-mint text-white p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg">💰 รายได้รวม</h3>
+                    <p class="text-xl font-bold">${totalRevenue.toLocaleString()} บาท</p>
+                </div>
+                <div class="bg-blue-500 text-white p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg">🏫 เขตพื้นที่ที่นิยม</h3>
+                    <p class="text-lg font-bold">${mostPopularCampus}</p>
+                </div>
+                <div class="bg-purple-500 text-white p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg">🏠 จำนวนห้องทั้งหมด</h3>
+                    <p class="text-2xl font-bold">${rooms.length} ห้อง</p>
+                </div>
+            `;
+
+            // Popular rooms
+            const sortedRooms = Object.entries(roomUsage)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3);
+
+            if (sortedRooms.length === 0) {
+                popularRooms.innerHTML = '<div class="text-center text-gray-500 py-4">ยังไม่มีข้อมูลการใช้งาน</div>';
+            } else {
+                popularRooms.innerHTML = sortedRooms.map(([room, count], index) => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                            <span class="font-medium">${room}</span>
+                        </div>
+                        <span class="bg-turquoise text-white px-3 py-1 rounded-full text-sm font-semibold">${count} ครั้ง</span>
+                    </div>
+                `).join('');
+            }
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979bedac2715a1b1',t:'MTc1Njk3MjU2Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
